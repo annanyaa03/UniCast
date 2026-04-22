@@ -1,38 +1,45 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   Home, TrendingUp, Play, Users, Calendar,
   BookOpen, Clock, ThumbsUp, Radio, Settings,
-  Shield, Tv, Bookmark, Search,
+  Shield, Tv, Bookmark, Upload, Building2,
+  HelpCircle, Plus
 } from 'lucide-react';
 
 const Sidebar = () => {
   const { sidebarOpen, sidebarCollapsed } = useSelector((s) => s.ui);
   const { user } = useSelector((s) => s.auth);
-  const { unreadCount } = useSelector((s) => s.notifications);
+
+  if (!sidebarOpen) return null;
 
   const main = [
     { to: '/', icon: <Home size={17} />, label: 'Home', exact: true },
+    { to: '/upload', icon: <Upload size={17} />, label: 'Upload' },
     { to: '/shorts', icon: <Tv size={17} />, label: 'Shorts' },
     { to: '/subscriptions', icon: <Play size={17} />, label: 'Subscriptions' },
   ];
 
   const library = [
-    { to: '/history', icon: <Clock size={17} />, label: 'History' },
+    { to: '/history', icon: <Clock size={17} />, label: 'Watch History' },
     { to: '/playlists', icon: <BookOpen size={17} />, label: 'Playlists' },
     { to: '/liked', icon: <ThumbsUp size={17} />, label: 'Liked Videos' },
-    { to: '/saved', icon: <Bookmark size={17} />, label: 'Saved' },
+    { to: '/saved', icon: <Bookmark size={17} />, label: 'Watch Later' },
   ];
 
   const explore = [
     { to: '/search?filter=trending', icon: <TrendingUp size={17} />, label: 'Trending' },
+    { to: '/departments', icon: <Building2 size={17} />, label: 'Departments' },
     { to: '/clubs', icon: <Users size={17} />, label: 'Clubs' },
     { to: '/events', icon: <Calendar size={17} />, label: 'Events' },
     { to: '/live', icon: <Radio size={17} />, label: 'Live', badge: 'LIVE' },
   ];
 
-  if (!sidebarOpen) return null;
+  const bottom = [
+    { to: '/settings', icon: <Settings size={17} />, label: 'Settings' },
+    { to: '/help', icon: <HelpCircle size={17} />, label: 'Help' },
+  ];
 
   const cls = `sidebar ${sidebarCollapsed ? 'collapsed' : ''}`;
 
@@ -47,7 +54,11 @@ const Sidebar = () => {
       >
         {link.icon}
         <span className="sidebar__item-text">{link.label}</span>
-        {link.badge && <span className="sidebar__badge" style={{ background: 'var(--red)', fontSize: 9 }}>{link.badge}</span>}
+        {link.badge && (
+          <span className={`sidebar__badge ${link.badge === 'LIVE' ? 'sidebar__badge--live' : ''}`}>
+            {link.badge}
+          </span>
+        )}
       </NavLink>
     ));
 
@@ -55,32 +66,57 @@ const Sidebar = () => {
     <aside className={cls}>
       <div className="sidebar__section">{renderLinks(main)}</div>
 
-      {user && (
-        <div className="sidebar__section">
-          <div className="sidebar__label">Library</div>
-          {renderLinks(library)}
-        </div>
-      )}
+      <div className="sidebar__section">
+        {!sidebarCollapsed && <div className="sidebar__label">Library</div>}
+        {renderLinks(library)}
+      </div>
 
       <div className="sidebar__section">
-        <div className="sidebar__label">Explore</div>
+        {!sidebarCollapsed && <div className="sidebar__label">Explore</div>}
         {renderLinks(explore)}
       </div>
 
       {user && (
         <div className="sidebar__section">
-          <NavLink to="/settings" className={({ isActive }) => `sidebar__item ${isActive ? 'active' : ''}`}>
-            <Settings size={17} />
-            <span className="sidebar__item-text">Settings</span>
-          </NavLink>
-          {user?.user_metadata?.role === 'admin' && (
-            <NavLink to="/admin" className={({ isActive }) => `sidebar__item ${isActive ? 'active' : ''}`}>
-              <Shield size={17} />
-              <span className="sidebar__item-text">Admin</span>
-            </NavLink>
+          {!sidebarCollapsed && <div className="sidebar__label">Your Clubs</div>}
+          {user.clubs && user.clubs.length > 0 ? (
+            user.clubs.slice(0, 4).map((club) => (
+              <NavLink 
+                key={club.id} 
+                to={`/clubs/${club.id}`} 
+                className="sidebar__item"
+                title={sidebarCollapsed ? club.name : undefined}
+              >
+                <div className="sidebar__club-dot">{club.name[0]}</div>
+                <span className="sidebar__item-text">{club.name}</span>
+              </NavLink>
+            ))
+          ) : (
+            !sidebarCollapsed && <div className="sidebar__empty-text">No clubs joined yet</div>
           )}
+          <NavLink 
+            to="/clubs" 
+            className="sidebar__item" 
+            title={sidebarCollapsed ? 'Browse All Clubs' : undefined}
+          >
+            <Plus size={17} />
+            <span className="sidebar__item-text">Browse All Clubs</span>
+          </NavLink>
         </div>
       )}
+
+      {user?.user_metadata?.role === 'admin' && !sidebarCollapsed && (
+        <div className="sidebar__section">
+          <NavLink to="/admin" className="sidebar__item">
+            <Shield size={17} />
+            <span className="sidebar__item-text">Admin Panel</span>
+          </NavLink>
+        </div>
+      )}
+
+      <div className="sidebar__bottom-section">
+        {renderLinks(bottom)}
+      </div>
     </aside>
   );
 };

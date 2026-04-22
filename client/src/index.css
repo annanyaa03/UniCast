@@ -166,27 +166,54 @@ p { color: var(--gray-600); line-height: 1.7; }
 .sidebar__section { padding: 8px 0; border-bottom: 1px solid var(--border); }
 .sidebar__section:last-child { border-bottom: none; }
 .sidebar__label {
-  padding: 10px 16px 4px; font-size: 10.5px; font-weight: 600;
-  color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 10px 16px 4px; font-size: 11px; font-weight: 600;
+  color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em;
   white-space: nowrap; overflow: hidden; transition: opacity 0.2s;
 }
-.sidebar.collapsed .sidebar__label { opacity: 0; pointer-events: none; }
+.sidebar.collapsed .sidebar__label { display: none; }
 .sidebar__item {
   display: flex; align-items: center; gap: 12px; padding: 9px 16px;
   font-size: 13px; font-weight: 500; color: var(--gray-600);
-  cursor: pointer; transition: var(--transition); white-space: nowrap; overflow: hidden;
+  cursor: pointer; transition: all 150ms ease; white-space: nowrap; overflow: hidden;
   border-left: 2px solid transparent;
 }
-.sidebar__item:hover { background: var(--gray-50); color: var(--gray-900); }
+.sidebar__item:hover { background: var(--gray-100); color: var(--gray-900); }
 .sidebar__item.active { color: var(--gray-900); background: var(--gray-100); border-left-color: var(--gray-900); font-weight: 600; }
+.sidebar.collapsed .sidebar__item { justify-content: center; padding: 12px 16px; border-left: none; }
+.sidebar.collapsed .sidebar__item.active { border-left: none; background: var(--gray-100); color: var(--gray-900); }
 .sidebar__item svg { flex-shrink: 0; }
 .sidebar__item-text { transition: opacity 0.2s; overflow: hidden; text-overflow: ellipsis; }
-.sidebar.collapsed .sidebar__item-text { opacity: 0; width: 0; }
+.sidebar.collapsed .sidebar__item-text { display: none; }
 .sidebar__badge {
   margin-left: auto; background: var(--gray-900); color: var(--white);
   font-size: 10px; font-weight: 600; padding: 1px 6px; min-width: 18px; text-align: center;
 }
-.sidebar.collapsed .sidebar__badge { opacity: 0; }
+.sidebar__badge--live {
+  background: var(--red) !important;
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.85; }
+}
+.sidebar.collapsed .sidebar__badge { display: none; }
+
+.sidebar__bottom-section {
+  margin-top: auto;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar__club-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--gray-900); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+
+.sidebar__empty-text {
+  padding: 10px 16px; font-size: 12px; color: var(--gray-400); font-style: italic;
+}
 
 /* ============================================================
    BUTTONS

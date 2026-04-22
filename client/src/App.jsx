@@ -24,6 +24,7 @@ const Playlists = lazy(() => import('./pages/Playlists'));
 const History = lazy(() => import('./pages/History'));
 const Settings = lazy(() => import('./pages/Settings'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const Departments = lazy(() => import('./pages/Departments'));
 
 function App() {
   const dispatch = useDispatch();
@@ -66,6 +67,7 @@ function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/shorts" element={<Shorts />} />
             <Route path="/live" element={<Live />} />
+            <Route path="/departments" element={<Departments />} />
             
             {/* Protected Routes */}
             <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
