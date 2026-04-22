@@ -2,10 +2,10 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
-  Home, TrendingUp, Play, Users, Calendar,
-  BookOpen, Clock, ThumbsUp, Radio, Settings,
-  Shield, Tv, Bookmark, Upload, Building2,
-  HelpCircle, Plus
+  Home, Flame, Library, Users, Ticket,
+  GraduationCap, History, Heart, Signal, Settings,
+  Shield, Clapperboard, Timer, Upload, ListVideo,
+  Info, Plus
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -17,28 +17,28 @@ const Sidebar = () => {
   const main = [
     { to: '/', icon: <Home size={17} />, label: 'Home', exact: true },
     { to: '/upload', icon: <Upload size={17} />, label: 'Upload' },
-    { to: '/shorts', icon: <Tv size={17} />, label: 'Shorts' },
-    { to: '/subscriptions', icon: <Play size={17} />, label: 'Subscriptions' },
+    { to: '/shorts', icon: <Clapperboard size={17} />, label: 'Shorts' },
+    { to: '/subscriptions', icon: <Library size={17} />, label: 'Subscriptions' },
   ];
 
   const library = [
-    { to: '/history', icon: <Clock size={17} />, label: 'Watch History' },
-    { to: '/playlists', icon: <BookOpen size={17} />, label: 'Playlists' },
-    { to: '/liked', icon: <ThumbsUp size={17} />, label: 'Liked Videos' },
-    { to: '/saved', icon: <Bookmark size={17} />, label: 'Watch Later' },
+    { to: '/history', icon: <History size={17} />, label: 'Watch History' },
+    { to: '/playlists', icon: <ListVideo size={17} />, label: 'Playlists' },
+    { to: '/liked', icon: <Heart size={17} />, label: 'Liked Videos' },
+    { to: '/saved', icon: <Timer size={17} />, label: 'Watch Later' },
   ];
 
   const explore = [
-    { to: '/search?filter=trending', icon: <TrendingUp size={17} />, label: 'Trending' },
-    { to: '/departments', icon: <Building2 size={17} />, label: 'Departments' },
+    { to: '/search?filter=trending', icon: <Flame size={17} />, label: 'Trending' },
+    { to: '/departments', icon: <GraduationCap size={17} />, label: 'Departments' },
     { to: '/clubs', icon: <Users size={17} />, label: 'Clubs' },
-    { to: '/events', icon: <Calendar size={17} />, label: 'Events' },
-    { to: '/live', icon: <Radio size={17} />, label: 'Live', badge: 'LIVE' },
+    { to: '/events', icon: <Ticket size={17} />, label: 'Events' },
+    { to: '/live', icon: <Signal size={17} />, label: 'Live', badge: 'LIVE' },
   ];
 
   const bottom = [
     { to: '/settings', icon: <Settings size={17} />, label: 'Settings' },
-    { to: '/help', icon: <HelpCircle size={17} />, label: 'Help' },
+    { to: '/help', icon: <Info size={17} />, label: 'Help' },
   ];
 
   const cls = `sidebar ${sidebarCollapsed ? 'collapsed' : ''}`;
