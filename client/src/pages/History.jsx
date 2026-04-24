@@ -5,10 +5,10 @@ import VideoCard from '../components/common/VideoCard';
 import { formatDate } from '../utils/formatters';
 
 const MOCK_HISTORY = [
-  { id: 'v1', title: 'Intro to Data Structures', views: 1240, createdAt: '2024-04-20T10:00:00', creator: { fullName: 'Prof. Sharma', id: 'p1' }, thumbnail: 'https://picsum.photos/seed/v1/640/360', watchedAt: '2024-04-21T21:30:00' },
-  { id: 'v2', title: 'React Hooks Explained', views: 5600, createdAt: '2024-04-18T14:30:00', creator: { fullName: 'Tech Society', id: 't1' }, thumbnail: 'https://picsum.photos/seed/v2/640/360', watchedAt: '2024-04-21T18:15:00' },
-  { id: 'v3', title: 'Campus Night 2024', views: 890, createdAt: '2024-03-22T09:15:00', creator: { fullName: 'Cultural Council', id: 'c1' }, thumbnail: 'https://picsum.photos/seed/v3/640/360', watchedAt: '2024-04-20T23:00:00' },
-  { id: 'v4', title: 'Robotics Demo', views: 420, createdAt: '2024-02-15T11:00:00', creator: { fullName: 'Robotics Club', id: 'r1' }, thumbnail: 'https://picsum.photos/seed/v4/640/360', watchedAt: '2024-04-20T14:45:00' },
+  { id: 'v1', title: 'Intro to Data Structures', views: 1240, createdAt: '2024-04-20T10:00:00', creator: { fullName: 'Prof. Sharma', id: 'p1' }, thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=640', watchedAt: '2024-04-21T21:30:00' },
+  { id: 'v2', title: 'React Hooks Explained', views: 5600, createdAt: '2024-04-18T14:30:00', creator: { fullName: 'Tech Society', id: 't1' }, thumbnail: 'https://images.pexels.com/photos/1181335/pexels-photo-1181335.jpeg?auto=compress&cs=tinysrgb&w=640', watchedAt: '2024-04-21T18:15:00' },
+  { id: 'v3', title: 'Campus Night 2024', views: 890, createdAt: '2024-03-22T09:15:00', creator: { fullName: 'Cultural Council', id: 'c1' }, thumbnail: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=640', watchedAt: '2024-04-20T23:00:00' },
+  { id: 'v4', title: 'Robotics Demo', views: 420, createdAt: '2024-02-15T11:00:00', creator: { fullName: 'Robotics Club', id: 'r1' }, thumbnail: 'https://images.pexels.com/photos/2599244/pexels-photo-2599244.jpeg?auto=compress&cs=tinysrgb&w=640', watchedAt: '2024-04-20T14:45:00' },
 ];
 
 const History = () => {

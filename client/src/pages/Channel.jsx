@@ -27,7 +27,7 @@ const Channel = () => {
     bio: 'Professional bio and information about the channel creator.',
     subscribers: 1240,
     videos: 42,
-    banner: 'https://picsum.photos/seed/banner/1200/200',
+    banner: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1200',
     avatar: '',
     department: 'Computer Science',
     year: '3rd Year',

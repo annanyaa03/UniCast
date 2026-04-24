@@ -18,7 +18,7 @@ const MOCK_COMMENTS = Array.from({ length: 6 }, (_, i) => ({
 
 const MOCK_RELATED = Array.from({ length: 6 }, (_, i) => ({
   id: `rv${i}`, title: ['Sorting Algorithms Explained', 'Graph Theory Basics', 'Dynamic Programming', 'Trees & BST', 'Hash Tables', 'System Design Intro'][i],
-  thumbnail: `https://picsum.photos/seed/rel${i}/640/360`,
+  thumbnail: `https://images.pexels.com/photos/${[1181244, 1181335, 546819, 3183197, 3861969, 2599244][i]}/pexels-photo-${[1181244, 1181335, 546819, 3183197, 3861969, 2599244][i]}.jpeg?auto=compress&cs=tinysrgb&w=640`,
   duration: 600 + i * 90, views: 3400 + i * 800,
   creator: { fullName: 'Prof. Sharma', id: 'prof-1' },
   createdAt: new Date(Date.now() - i * 86400000).toISOString(),
@@ -43,7 +43,7 @@ const Watch = () => {
   const video = currentVideo || {
     id, title: 'Introduction to Data Structures & Algorithms',
     description: 'In this comprehensive lecture, we cover the fundamentals of data structures including arrays, linked lists, stacks, queues, and trees. This video is part of the CS101 curriculum.\n\nTopics covered:\n- Array operations and complexity\n- Singly and doubly linked lists\n- Stack and queue implementations\n- Binary trees and traversal\n\nTimestamps:\n0:00 - Introduction\n5:30 - Arrays\n18:00 - Linked Lists\n35:00 - Stacks & Queues\n52:00 - Trees',
-    thumbnail: `https://picsum.photos/seed/${id}/1280/720`,
+    thumbnail: `https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=1280`,
     views: 14200, likes: 438, dislikes: 12, duration: 3840,
     creator: { id: 'prof-1', fullName: 'Prof. Ranjit Sharma', username: 'prof_sharma' },
     category: 'education', tags: ['data structures', 'algorithms', 'cs101'],

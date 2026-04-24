@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Radio, Users, MessageSquare, Send, Heart, Share2, MoreVertical } from 'lucide-react';
 
 const MOCK_LIVES = [
-  { id: 'live-1', title: 'Hackathon 2024 - Final Presentations', creator: 'Coding Club', viewers: 1840, image: 'https://picsum.photos/seed/live1/1200/600', isLive: true },
-  { id: 'live-2', title: 'Campus Night - Live Music Session', creator: 'Cultural Council', viewers: 850, image: 'https://picsum.photos/seed/live2/1200/600', isLive: true },
-  { id: 'live-3', title: 'Open Mic Poetry Night', creator: 'Literature Club', viewers: 120, image: 'https://picsum.photos/seed/live3/1200/600', isLive: true },
+  { id: 'live-1', title: 'Hackathon 2024 - Final Presentations', creator: 'Coding Club', viewers: 1840, image: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=1200', isLive: true },
+  { id: 'live-2', title: 'Campus Night - Live Music Session', creator: 'Cultural Council', viewers: 850, image: 'https://images.pexels.com/photos/1644614/pexels-photo-1644614.jpeg?auto=compress&cs=tinysrgb&w=1200', isLive: true },
+  { id: 'live-3', title: 'Open Mic Poetry Night', creator: 'Literature Club', viewers: 120, image: 'https://images.pexels.com/photos/2833037/pexels-photo-2833037.jpeg?auto=compress&cs=tinysrgb&w=1200', isLive: true },
 ];
 
 const Live = () => {

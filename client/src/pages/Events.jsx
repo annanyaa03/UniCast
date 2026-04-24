@@ -6,11 +6,11 @@ import { formatDate } from '../utils/formatters';
 const EVENT_CATEGORIES = ['All', 'Technical', 'Cultural', 'Sports', 'Academic', 'Workshops'];
 
 const MOCK_EVENTS = [
-  { id: 'ev-1', title: 'Grand Annual Fest 2024', date: '2024-05-15T10:00:00', venue: 'Main Auditorium', category: 'Cultural', organizer: 'Cultural Council', image: 'https://picsum.photos/seed/fest/800/400', isAttending: false },
-  { id: 'ev-2', title: 'Inter-College Hackathon', date: '2024-04-28T09:00:00', venue: 'IT Block - CS Lab', category: 'Technical', organizer: 'Coding Club', image: 'https://picsum.photos/seed/hack/800/400', isAttending: true },
-  { id: 'ev-3', title: 'Machine Learning Workshop', date: '2024-05-02T14:30:00', venue: 'Seminar Hall 1', category: 'Workshops', organizer: 'Robotics Club', image: 'https://picsum.photos/seed/workshop/800/400', isAttending: false },
-  { id: 'ev-4', title: 'Annual Cricket Tournament', date: '2024-05-10T08:00:00', venue: 'Sports Ground', category: 'Sports', organizer: 'Sports Committee', image: 'https://picsum.photos/seed/cricket/800/400', isAttending: false },
-  { id: 'ev-5', title: 'Guest Lecture: Future of AI', date: '2024-04-25T11:00:00', venue: 'Block 2 Auditorium', category: 'Academic', organizer: 'CSE Department', image: 'https://picsum.photos/seed/lecture/800/400', isAttending: false },
+  { id: 'ev-1', title: 'Grand Annual Fest 2024', date: '2024-05-15T10:00:00', venue: 'Main Auditorium', category: 'Cultural', organizer: 'Cultural Council', image: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=800', isAttending: false },
+  { id: 'ev-2', title: 'Inter-College Hackathon', date: '2024-04-28T09:00:00', venue: 'IT Block - CS Lab', category: 'Technical', organizer: 'Coding Club', image: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=800', isAttending: true },
+  { id: 'ev-3', title: 'Machine Learning Workshop', date: '2024-05-02T14:30:00', venue: 'Seminar Hall 1', category: 'Workshops', organizer: 'Robotics Club', image: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800', isAttending: false },
+  { id: 'ev-4', title: 'Annual Cricket Tournament', date: '2024-05-10T08:00:00', venue: 'Sports Ground', category: 'Sports', organizer: 'Sports Committee', image: 'https://images.pexels.com/photos/3628912/pexels-photo-3628912.jpeg?auto=compress&cs=tinysrgb&w=800', isAttending: false },
+  { id: 'ev-5', title: 'Guest Lecture: Future of AI', date: '2024-04-25T11:00:00', venue: 'Block 2 Auditorium', category: 'Academic', organizer: 'CSE Department', image: 'https://images.pexels.com/photos/2173508/pexels-photo-2173508.jpeg?auto=compress&cs=tinysrgb&w=800', isAttending: false },
 ];
 
 const Events = () => {

@@ -10,20 +10,30 @@ const { sendSuccess, sendError } = require('../utils/response');
 // POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
-    const { fullName, username, email, password, department, year } = req.validatedData || req.body;
+    const { fullName, username, email, password, department, year } = req.body;
+
+    if (!fullName || !username || !email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields are required' 
+      });
+    }
 
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return sendError(res, 400, 'Email is already registered');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is already registered' 
+      });
     }
 
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
-      return sendError(res, 400, 'Username is already taken');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Username is already taken' 
+      });
     }
-
-    const otp = generateOTP(6);
-    const otpExpiry = generateOTPExpiry(10);
 
     const user = await User.create({
       fullName,
@@ -31,22 +41,29 @@ exports.register = async (req, res, next) => {
       email,
       password,
       department,
-      year,
-      emailOTP: otp,
-      emailOTPExpiry: otpExpiry,
+      year: parseInt(year) || undefined,
     });
 
-    await sendOTPEmail(email, otp, fullName);
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    logger.info('New user registered', {
-      userId: user._id,
-      email: user.email,
-      username: user.username,
-    });
+    setRefreshTokenCookie(res, refreshToken);
 
-    return sendSuccess(res, 201, 'Account created. Please check your email for the OTP.', {
-      otpRequired: true,
-      email: user.email,
+    return res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      accessToken,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        department: user.department,
+        year: user.year,
+        isVerified: user.isVerified,
+      },
     });
   } catch (err) {
     next(err);

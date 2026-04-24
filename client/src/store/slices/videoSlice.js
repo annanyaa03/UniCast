@@ -2,10 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
 // Mock data for demonstration when API is not available
+// Mock data for demonstration when API is not available
+const PEXELS_IDS = [1181244, 1105666, 2599244, 3861969, 3628912, 1701202, 546819, 1181335];
+
 const MOCK_VIDEOS = Array.from({ length: 12 }, (_, i) => ({
   id: `vid-${i + 1}`,
   title: ['Introduction to Data Structures', 'College Fest 2024 Highlights', 'Robotics Club Demo Day', 'Guest Lecture: Machine Learning', 'Annual Sports Meet', 'Cultural Night Performance', 'Web Dev Workshop', 'Hackathon 2024 Winner Project'][i % 8],
-  thumbnail: `https://picsum.photos/seed/${i + 10}/640/360`,
+  thumbnail: `https://images.pexels.com/photos/${PEXELS_IDS[i % 8]}/pexels-photo-${PEXELS_IDS[i % 8]}.jpeg?auto=compress&cs=tinysrgb&w=640`,
   duration: 300 + i * 120,
   views: (i + 1) * 1200 + Math.floor(Math.random() * 5000),
   likes: (i + 1) * 80,

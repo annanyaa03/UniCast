@@ -4,10 +4,10 @@ import { Play, ListVideo, Clock, MoreVertical, Plus, Trash2, Search as SearchIco
 import { formatRelativeTime } from '../utils/formatters';
 
 const MOCK_PLAYLISTS = [
-  { id: 'pl-1', title: 'Data Structures 101', videoCount: 12, lastUpdated: '2024-04-10T10:00:00', thumbnail: 'https://picsum.photos/seed/pl1/640/360', isPrivate: false },
-  { id: 'pl-2', title: 'Campus Fest Highlights', videoCount: 24, lastUpdated: '2024-03-22T14:30:00', thumbnail: 'https://picsum.photos/seed/pl2/640/360', isPrivate: true },
-  { id: 'pl-3', title: 'Final Project References', videoCount: 8, lastUpdated: '2024-04-20T09:15:00', thumbnail: 'https://picsum.photos/seed/pl3/640/360', isPrivate: true },
-  { id: 'pl-4', title: 'Coding Club Workshop', videoCount: 5, lastUpdated: '2024-02-15T11:00:00', thumbnail: 'https://picsum.photos/seed/pl4/640/360', isPrivate: false },
+  { id: 'pl-1', title: 'Data Structures 101', videoCount: 12, lastUpdated: '2024-04-10T10:00:00', thumbnail: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=640', isPrivate: false },
+  { id: 'pl-2', title: 'Campus Fest Highlights', videoCount: 24, lastUpdated: '2024-03-22T14:30:00', thumbnail: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=640', isPrivate: true },
+  { id: 'pl-3', title: 'Final Project References', videoCount: 8, lastUpdated: '2024-04-20T09:15:00', thumbnail: 'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg?auto=compress&cs=tinysrgb&w=640', isPrivate: true },
+  { id: 'pl-4', title: 'Coding Club Workshop', videoCount: 5, lastUpdated: '2024-02-15T11:00:00', thumbnail: 'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=640', isPrivate: false },
 ];
 
 const Playlists = () => {

@@ -263,3 +263,116 @@ exports.uploadVideo = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getShorts = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 12 } = req.query;
+    const cacheKey = cache.keys.shorts(page);
+    const cached = await cache.get(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [videos, total] = await Promise.all([
+      Video.find({ visibility: 'public', isShort: true })
+        .populate('uploader', 'fullName avatar username _id')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Video.countDocuments({ visibility: 'public', isShort: true }),
+    ]);
+
+    const responseData = {
+      success: true,
+      message: 'Shorts fetched',
+      data: videos,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit)),
+        hasNext: skip + videos.length < total,
+        hasPrev: parseInt(page) > 1,
+      },
+    };
+
+    await cache.set(cacheKey, responseData, 300);
+    return res.status(200).json(responseData);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateVideo = async (req, res, next) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) return sendError(res, 404, 'Video not found');
+
+    if (video.uploader.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return sendError(res, 403, 'Not authorized');
+    }
+
+    const allowedFields = ['title', 'description', 'category', 'visibility', 'tags', 'isShort', 'chapters'];
+    const updates = {};
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+
+    const updated = await Video.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true, runValidators: true });
+
+    await cache.del(cache.keys.videoDetail(req.params.id));
+    await cache.delPattern('videos:feed:*');
+
+    return sendSuccess(res, 200, 'Video updated', updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.saveVideo = async (req, res, next) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user._id);
+    if (!user) return sendError(res, 404, 'User not found');
+
+    const videoId = req.params.id;
+    const alreadySaved = user.savedVideos.includes(videoId);
+
+    if (alreadySaved) {
+      user.savedVideos.pull(videoId);
+    } else {
+      user.savedVideos.push(videoId);
+    }
+
+    await user.save();
+    return sendSuccess(res, 200, alreadySaved ? 'Video unsaved' : 'Video saved', {
+      saved: !alreadySaved,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getRelatedVideos = async (req, res, next) => {
+  try {
+    const video = await Video.findById(req.params.id).select('category tags').lean();
+    if (!video) return sendError(res, 404, 'Video not found');
+
+    const related = await Video.find({
+      _id: { $ne: req.params.id },
+      visibility: 'public',
+      $or: [
+        { category: video.category },
+        { tags: { $in: video.tags || [] } },
+      ],
+    })
+      .populate('uploader', 'fullName avatar username _id')
+      .sort({ views: -1 })
+      .limit(12)
+      .lean();
+
+    return sendSuccess(res, 200, 'Related videos fetched', related);
+  } catch (err) {
+    next(err);
+  }
+};

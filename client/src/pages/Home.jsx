@@ -11,7 +11,7 @@ const CATEGORIES = ['All', 'Education', 'Cultural', 'Sports', 'Technical', 'Even
 const MOCK_HERO = {
   id: 'hero-1',
   title: 'Annual Technical Fest 2024 — Opening Ceremony',
-  thumbnail: 'https://picsum.photos/seed/hero1/1200/500',
+  thumbnail: 'https://images.pexels.com/photos/2747449/pexels-photo-2747449.jpeg?auto=compress&cs=tinysrgb&w=1200',
   views: 18400,
   creator: { fullName: 'Events Committee', id: 'ec-1' },
   createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),

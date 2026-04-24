@@ -1,0 +1,31 @@
+{"environment":"development","level":"info","message":"UniCast API running","pid":31972,"port":5000,"service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:03"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:04"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:04"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:04"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:04"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:04"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:04"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:05"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:05"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:05"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:05"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:06"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:06"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:06"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:06"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:07"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:07"}
+{"level":"warn","message":"Redis reconnecting...","service":"unicast-api","timestamp":"2026-04-24 23:18:07"}
+{"error":"","level":"error","message":"Redis client error","service":"unicast-api","timestamp":"2026-04-24 23:18:07"}
+{"error":"connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","level":"error","message":"MongoDB connection failed","service":"unicast-api","timestamp":"2026-04-24 23:18:08"}

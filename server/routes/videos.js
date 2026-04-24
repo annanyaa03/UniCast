@@ -20,13 +20,12 @@ router.post(
 );
 
 router.get('/:id', optionalAuth, videoController.getVideoById);
-router.put('/:id', protect, validate(updateVideoSchema), videoController.updateVideo);
+router.put('/:id', protect, videoController.updateVideo);
 router.delete('/:id', protect, videoController.deleteVideo);
 router.post('/:id/like', protect, videoController.likeVideo);
 router.post('/:id/dislike', protect, videoController.dislikeVideo);
 router.post('/:id/view', optionalAuth, videoController.incrementView);
 router.post('/:id/save', protect, videoController.saveVideo);
-router.post('/:id/chapters', protect, videoController.addChapters);
 router.get('/:id/related', optionalAuth, videoController.getRelatedVideos);
 
 module.exports = router;

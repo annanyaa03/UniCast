@@ -49,7 +49,7 @@ const Shorts = () => {
             <div style={{ 
               position: 'absolute', 
               inset: 0, 
-              backgroundImage: `url(https://picsum.photos/seed/${short.id}/10/20)`, 
+              backgroundImage: `url(https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=50)`, 
               backgroundSize: 'cover', 
               filter: 'blur(30px) brightness(0.4)',
               zIndex: 0
