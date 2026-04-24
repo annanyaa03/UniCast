@@ -1,65 +1,82 @@
 const Video = require('../models/Video');
+const cache = require('../utils/cache');
+const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
+const videoQueue = require('../queues/videoQueue');
+const logger = require('../config/logger');
 
-// GET /api/videos
-exports.getVideos = async (req, res) => {
+exports.getVideos = async (req, res, next) => {
   try {
-    const {
-      category,
-      page = 1,
-      limit = 12,
-      sort = 'createdAt'
-    } = req.query;
+    const { category = '', page = 1, limit = 12, sort = 'createdAt' } = req.query;
+    const cacheKey = cache.keys.videoFeed(page, category);
 
-    const filter = { visibility: 'public' };
-
-    if (category && category.trim() !== '') {
-      filter.category = category;
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
     }
 
+    const filter = { visibility: 'public' };
+    if (category && category.trim() !== '') filter.category = category;
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOption = sort === 'views' ? { views: -1 } : { createdAt: -1 };
 
-    const sortOption = {};
-    if (sort === 'views') sortOption.views = -1;
-    else if (sort === 'oldest') sortOption.createdAt = 1;
-    else sortOption.createdAt = -1;
+    const [videos, total] = await Promise.all([
+      Video.find(filter)
+        .populate('uploader', 'fullName avatar username _id')
+        .sort(sortOption)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Video.countDocuments(filter),
+    ]);
 
-    const videos = await Video.find(filter)
-      .populate('uploader', 'fullName avatar username _id')
-      .sort(sortOption)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean();
+    const responseData = {
+      success: true,
+      message: 'Videos fetched successfully',
+      data: videos,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit)),
+        hasNext: skip + videos.length < total,
+        hasPrev: parseInt(page) > 1,
+      },
+    };
 
-    const total = await Video.countDocuments(filter);
-
-    return res.status(200).json({
-      videos,
-      hasMore: skip + videos.length < total,
-      total,
-      page: parseInt(page),
-    });
+    await cache.set(cacheKey, responseData, 300);
+    return res.status(200).json(responseData);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// GET /api/videos/trending
-exports.getTrending = async (req, res) => {
+exports.getTrending = async (req, res, next) => {
   try {
+    const cacheKey = cache.keys.trending();
+    const cached = await cache.get(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
     const videos = await Video.find({ visibility: 'public' })
       .populate('uploader', 'fullName avatar username _id')
       .sort({ views: -1, createdAt: -1 })
-      .limit(12)
+      .limit(20)
       .lean();
 
-    return res.status(200).json({ videos });
+    const responseData = {
+      success: true,
+      message: 'Trending videos fetched',
+      data: videos,
+    };
+
+    await cache.set(cacheKey, responseData, 600);
+    return res.status(200).json(responseData);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// GET /api/videos/search
-exports.searchVideos = async (req, res) => {
+exports.searchVideos = async (req, res, next) => {
   try {
     const { q = '', page = 1, limit = 12 } = req.query;
     const filter = { visibility: 'public', title: { $regex: q, $options: 'i' } };
@@ -74,49 +91,65 @@ exports.searchVideos = async (req, res) => {
 
     const total = await Video.countDocuments(filter);
 
-    return res.status(200).json({
-      videos,
-      hasMore: skip + videos.length < total,
-      total,
+    return sendPaginated(res, 'Videos found', videos, {
       page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      hasNext: skip + videos.length < total
     });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// GET /api/videos/:id
-exports.getVideoById = async (req, res) => {
+exports.getVideoById = async (req, res, next) => {
   try {
+    const cacheKey = cache.keys.videoDetail(req.params.id);
+    const cached = await cache.get(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
     const video = await Video.findById(req.params.id)
-      .populate('uploader', 'fullName avatar username subscribers _id')
+      .populate('uploader', 'fullName avatar username subscribers _id isVerifiedBadge')
       .lean();
 
     if (!video) {
-      return res.status(404).json({ message: 'Video not found' });
+      return sendError(res, 404, 'Video not found');
     }
 
-    return res.status(200).json(video);
+    if (video.visibility === 'private') {
+      if (!req.user || req.user._id.toString() !== video.uploader._id.toString()) {
+        return sendError(res, 403, 'This video is private');
+      }
+    }
+
+    const responseData = {
+      success: true,
+      message: 'Video fetched successfully',
+      data: video,
+    };
+
+    await cache.set(cacheKey, responseData, 120);
+    return res.status(200).json(responseData);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// POST /api/videos/:id/view
-exports.incrementView = async (req, res) => {
+exports.incrementView = async (req, res, next) => {
   try {
     await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
-    return res.status(200).json({ message: 'View counted' });
+    await cache.del(cache.keys.videoDetail(req.params.id));
+    await cache.del(cache.keys.trending());
+    return sendSuccess(res, 200, 'View counted');
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// POST /api/videos/:id/like
-exports.likeVideo = async (req, res) => {
+exports.likeVideo = async (req, res, next) => {
   try {
     const video = await Video.findById(req.params.id);
-    if (!video) return res.status(404).json({ message: 'Video not found' });
+    if (!video) return sendError(res, 404, 'Video not found');
 
     const userId = req.user._id;
     const alreadyLiked = video.likes.includes(userId);
@@ -129,17 +162,24 @@ exports.likeVideo = async (req, res) => {
     }
 
     await video.save();
-    return res.status(200).json(video);
+
+    // Invalidate cache
+    await cache.del(cache.keys.videoDetail(req.params.id));
+
+    return sendSuccess(res, 200, alreadyLiked ? 'Like removed' : 'Video liked', { 
+      likes: video.likes.length,
+      dislikes: video.dislikes.length,
+      isLiked: !alreadyLiked,
+    });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// POST /api/videos/:id/dislike
-exports.dislikeVideo = async (req, res) => {
+exports.dislikeVideo = async (req, res, next) => {
   try {
     const video = await Video.findById(req.params.id);
-    if (!video) return res.status(404).json({ message: 'Video not found' });
+    if (!video) return sendError(res, 404, 'Video not found');
 
     const userId = req.user._id;
     const alreadyDisliked = video.dislikes.includes(userId);
@@ -152,30 +192,74 @@ exports.dislikeVideo = async (req, res) => {
     }
 
     await video.save();
-    return res.status(200).json(video);
+    
+    // Invalidate cache
+    await cache.del(cache.keys.videoDetail(req.params.id));
+    
+    return sendSuccess(res, 200, alreadyDisliked ? 'Dislike removed' : 'Video disliked', {
+      likes: video.likes.length,
+      dislikes: video.dislikes.length,
+      isDisliked: !alreadyDisliked,
+    });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// DELETE /api/videos/:id
-exports.deleteVideo = async (req, res) => {
+exports.deleteVideo = async (req, res, next) => {
   try {
     const video = await Video.findById(req.params.id);
-    if (!video) return res.status(404).json({ message: 'Video not found' });
+    if (!video) return sendError(res, 404, 'Video not found');
 
     if (video.uploader.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
+      return sendError(res, 403, 'Not authorized');
     }
 
     await Video.findByIdAndDelete(req.params.id);
-    return res.status(200).json({ message: 'Video deleted' });
+    
+    // Invalidate cache
+    await cache.del(cache.keys.videoDetail(req.params.id));
+    await cache.delPattern('videos:feed:*');
+    await cache.del(cache.keys.trending());
+    
+    return sendSuccess(res, 200, 'Video deleted');
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
-// POST /api/videos/upload (stubbed to prevent crash since it's referenced in routes)
-exports.uploadVideo = async (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
+exports.uploadVideo = async (req, res, next) => {
+  try {
+    if (!req.file) return sendError(res, 400, 'No video file provided');
+
+    const { title, description, category, visibility, tags, isShort } = req.validatedData || req.body;
+
+    const video = await Video.create({
+      title,
+      description,
+      category: category || 'general',
+      visibility: visibility || 'public',
+      tags: tags ? (typeof tags === 'string' ? JSON.parse(tags) : tags) : [],
+      isShort: isShort || false,
+      uploader: req.user._id,
+      videoUrl: '',
+      thumbnail: '',
+      processingStatus: 'queued',
+    });
+
+    await videoQueue.add('process-video', {
+      videoId: video._id.toString(),
+      filePath: req.file.path,
+      uploaderId: req.user._id.toString(),
+    });
+
+    logger.info('Video upload queued', { videoId: video._id, userId: req.user._id });
+
+    return sendSuccess(res, 201, 'Video upload started. It will be ready shortly.', {
+      videoId: video._id,
+      processingStatus: 'queued',
+    });
+  } catch (err) {
+    next(err);
+  }
 };

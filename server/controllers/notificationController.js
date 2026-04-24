@@ -1,52 +1,80 @@
+const Notification = require('../models/Notification');
+const cache = require('../utils/cache');
+const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
+const logger = require('../config/logger');
 
-const asyncHandler = require('../utils/asyncHandler');
+exports.getNotifications = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-// @desc    Get user notifications
-// @route   GET /api/notifications
-// @access  Private
-const getNotifications = asyncHandler(async (req, res) => {
-  const { data: notifications, error } = await supabase
-    .from('notifications')
-    .select('*, profiles!actor_id(full_name, avatar_url)')
-    .eq('recipient_id', req.user.id)
-    .order('created_at', { ascending: false })
-    .limit(50);
+    const [notifications, total, unreadCount] = await Promise.all([
+      Notification.find({ recipient: req.user._id })
+        .populate('sender', 'fullName avatar username')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Notification.countDocuments({ recipient: req.user._id }),
+      Notification.countDocuments({ recipient: req.user._id, isRead: false }),
+    ]);
 
-  if (error) throw error;
+    return sendPaginated(res, 'Notifications fetched', notifications, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      hasNext: skip + notifications.length < total,
+      unreadCount,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
-  const { count: unreadCount, error: countError } = await supabase
-    .from('notifications')
-    .select('*', { count: 'exact', head: true })
-    .eq('recipient_id', req.user.id)
-    .eq('is_read', false);
+exports.markAsRead = async (req, res, next) => {
+  try {
+    await Notification.findOneAndUpdate(
+      { _id: req.params.id, recipient: req.user._id },
+      { isRead: true }
+    );
+    await cache.del(cache.keys.notifications(req.user._id));
+    return sendSuccess(res, 200, 'Notification marked as read');
+  } catch (err) {
+    next(err);
+  }
+};
 
-  if (countError) throw countError;
+exports.markAllRead = async (req, res, next) => {
+  try {
+    await Notification.updateMany(
+      { recipient: req.user._id, isRead: false },
+      { isRead: true }
+    );
+    await cache.del(cache.keys.notifications(req.user._id));
+    return sendSuccess(res, 200, 'All notifications marked as read');
+  } catch (err) {
+    next(err);
+  }
+};
 
-  res.status(200).json({
-    success: true,
-    notifications,
-    unreadCount
-  });
-});
+exports.deleteNotification = async (req, res, next) => {
+  try {
+    await Notification.findOneAndDelete({
+      _id: req.params.id,
+      recipient: req.user._id,
+    });
+    return sendSuccess(res, 200, 'Notification deleted');
+  } catch (err) {
+    next(err);
+  }
+};
 
-// @desc    Mark all read
-// @route   PUT /api/notifications/read-all
-// @access  Private
-const markAllRead = asyncHandler(async (req, res) => {
-  const { error } = await supabase
-    .from('notifications')
-    .update({ is_read: true })
-    .eq('recipient_id', req.user.id)
-    .eq('is_read', false);
-
-  if (error) throw error;
-
-  res.status(200).json({
-    success: true
-  });
-});
-
-module.exports = {
-  getNotifications,
-  markAllRead
+exports.deleteAllNotifications = async (req, res, next) => {
+  try {
+    await Notification.deleteMany({ recipient: req.user._id });
+    await cache.del(cache.keys.notifications(req.user._id));
+    return sendSuccess(res, 200, 'All notifications cleared');
+  } catch (err) {
+    next(err);
+  }
 };

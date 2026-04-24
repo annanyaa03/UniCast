@@ -1,82 +1,69 @@
+const Event = require('../models/Event');
+const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
+const { getPaginationParams, buildPaginationMeta } = require('../utils/paginate');
+const logger = require('../config/logger');
 
-const asyncHandler = require('../utils/asyncHandler');
+exports.getEvents = async (req, res, next) => {
+  try {
+    const { category, q } = req.query;
+    const { page, limit, skip } = getPaginationParams(req.query);
 
-// @desc    Get all events
-// @route   GET /api/events
-// @access  Public
-const getEvents = asyncHandler(async (req, res) => {
-  const { category, q } = req.query;
+    const filter = {};
+    if (category && category !== 'All') filter.category = category;
+    if (q) filter.$text = { $search: q };
 
-  let query = supabase
-    .from('events')
-    .select('*, profiles(full_name, username), clubs(name, logo_url)')
-    .order('date', { ascending: true });
+    const [events, total] = await Promise.all([
+      Event.find(filter)
+        .populate('creator', 'fullName username')
+        .populate('club', 'name logoUrl')
+        .sort({ startDate: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Event.countDocuments(filter),
+    ]);
 
-  if (category && category !== 'All') query = query.eq('category', category);
-  if (q) query = query.ilike('title', `%${q}%`);
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  res.status(200).json({
-    success: true,
-    events: data
-  });
-});
-
-// @desc    Get single event
-// @route   GET /api/events/:id
-// @access  Public
-const getEvent = asyncHandler(async (req, res) => {
-  const { data: event, error } = await supabase
-    .from('events')
-    .select('*, profiles(full_name, username), clubs(name, logo_url)')
-    .eq('id', req.params.id)
-    .single();
-
-  if (error || !event) {
-    res.status(404);
-    throw new Error('Event not found');
+    return sendPaginated(res, 'Events fetched successfully', events, buildPaginationMeta(page, limit, total));
+  } catch (err) {
+    next(err);
   }
+};
 
-  res.status(200).json({
-    success: true,
-    event
-  });
-});
+exports.getEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id)
+      .populate('creator', 'fullName username')
+      .populate('club', 'name logoUrl')
+      .lean();
 
-// @desc    Create an event
-// @route   POST /api/events
-// @access  Private (ClubAdmin/Admin/Professor)
-const createEvent = asyncHandler(async (req, res) => {
-  const { title, description, date, venue, category, image_url, club_id } = req.body;
+    if (!event) {
+      return sendError(res, 404, 'Event not found');
+    }
 
-  const { data: event, error } = await supabase
-    .from('events')
-    .insert({
+    return sendSuccess(res, 200, 'Event fetched successfully', event);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.createEvent = async (req, res, next) => {
+  try {
+    const { title, description, date, venue, category, image_url, club_id } = req.body;
+
+    const event = await Event.create({
       title,
       description,
-      date,
+      startDate: date,
       venue,
       category,
-      image_url,
-      club_id,
-      creator_id: req.user.id
-    })
-    .select()
-    .single();
+      imageUrl: image_url,
+      club: club_id,
+      creator: req.user._id,
+    });
 
-  if (error) throw error;
-
-  res.status(201).json({
-    success: true,
-    event
-  });
-});
-
-module.exports = {
-  getEvents,
-  getEvent,
-  createEvent
+    logger.info('Event created', { eventId: event._id, creator: req.user._id });
+    return sendSuccess(res, 201, 'Event created successfully', event);
+  } catch (err) {
+    next(err);
+  }
 };

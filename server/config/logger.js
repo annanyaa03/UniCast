@@ -66,4 +66,9 @@ const logger = winston.createLogger({
   ],
 });
 
+// Add this method to logger
+logger.withRequestId = (requestId) => {
+  return logger.child({ requestId });
+};
+
 module.exports = logger;

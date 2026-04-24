@@ -18,6 +18,7 @@ const connectDB = require('./config/db');
 const connectRedis = require('./config/redis');
 const { initSocket } = require('./sockets/socketHandler');
 const errorHandler = require('./middleware/errorHandler');
+const requestId = require('./middleware/requestId');
 const {
   globalLimiter,
   authLimiter,
@@ -47,6 +48,8 @@ const server = http.createServer(app);
 connectDB();
 connectRedis();
 initSocket(server);
+
+app.use(requestId);
 
 // Security
 app.use(helmet({
@@ -103,13 +106,71 @@ app.use((req, res, next) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
+const mongoose = require('mongoose');
+const os = require('os');
+
+app.get('/health', async (req, res) => {
+  const startTime = Date.now();
+
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+
+  let redisStatus = 'disconnected';
+  let redisLatency = null;
+  try {
+    const { getRedis } = require('./config/redis');
+    const redis = getRedis();
+    if (redis) {
+      const pingStart = Date.now();
+      await redis.ping();
+      redisLatency = `${Date.now() - pingStart}ms`;
+      redisStatus = 'connected';
+    }
+  } catch {}
+
+  const dbLatency = dbStatus === 'connected' ? `${Date.now() - startTime}ms` : null;
+
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemory = totalMemory - freeMemory;
+
+  const uptimeSeconds = process.uptime();
+  const hours = Math.floor(uptimeSeconds / 3600);
+  const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+  const seconds = Math.floor(uptimeSeconds % 60);
+
+  const allHealthy = dbStatus === 'connected' && redisStatus === 'connected';
+
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'healthy' : 'degraded',
     service: 'UniCast API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
+    uptime: `${hours}h ${minutes}m ${seconds}s`,
+    responseTime: `${Date.now() - startTime}ms`,
+    services: {
+      database: {
+        status: dbStatus,
+        latency: dbLatency,
+        name: 'MongoDB',
+      },
+      cache: {
+        status: redisStatus,
+        latency: redisLatency,
+        name: 'Redis',
+      },
+    },
+    memory: {
+      used: `${Math.round(usedMemory / 1024 / 1024)} MB`,
+      free: `${Math.round(freeMemory / 1024 / 1024)} MB`,
+      total: `${Math.round(totalMemory / 1024 / 1024)} MB`,
+      percentage: `${Math.round((usedMemory / totalMemory) * 100)}%`,
+    },
+    process: {
+      pid: process.pid,
+      nodeVersion: process.version,
+      platform: process.platform,
+    },
   });
 });
 

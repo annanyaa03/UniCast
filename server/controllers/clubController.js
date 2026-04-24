@@ -1,80 +1,67 @@
+const Club = require('../models/Club');
+const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
+const { getPaginationParams, buildPaginationMeta } = require('../utils/paginate');
+const logger = require('../config/logger');
 
-const asyncHandler = require('../utils/asyncHandler');
+exports.getClubs = async (req, res, next) => {
+  try {
+    const { category, q } = req.query;
+    const { page, limit, skip } = getPaginationParams(req.query);
 
-// @desc    Get all clubs
-// @route   GET /api/clubs
-// @access  Public
-const getClubs = asyncHandler(async (req, res) => {
-  const { category, q } = req.query;
+    const filter = {};
+    if (category && category !== 'All') filter.category = category;
+    if (q) filter.$text = { $search: q };
 
-  let query = supabase
-    .from('clubs')
-    .select('*, profiles(full_name, username)')
-    .order('name', { ascending: true });
+    const [clubs, total] = await Promise.all([
+      Club.find(filter)
+        .populate('creator', 'fullName username')
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Club.countDocuments(filter),
+    ]);
 
-  if (category && category !== 'All') query = query.eq('category', category);
-  if (q) query = query.ilike('name', `%${q}%`);
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  res.status(200).json({
-    success: true,
-    clubs: data
-  });
-});
-
-// @desc    Get single club
-// @route   GET /api/clubs/:id
-// @access  Public
-const getClub = asyncHandler(async (req, res) => {
-  const { data: club, error } = await supabase
-    .from('clubs')
-    .select('*, profiles(full_name, username)')
-    .eq('id', req.params.id)
-    .single();
-
-  if (error || !club) {
-    res.status(404);
-    throw new Error('Club not found');
+    return sendPaginated(res, 'Clubs fetched successfully', clubs, buildPaginationMeta(page, limit, total));
+  } catch (err) {
+    next(err);
   }
+};
 
-  res.status(200).json({
-    success: true,
-    club
-  });
-});
+exports.getClub = async (req, res, next) => {
+  try {
+    const club = await Club.findById(req.params.id)
+      .populate('creator', 'fullName username')
+      .populate('members', 'fullName username avatar')
+      .lean();
 
-// @desc    Create a club
-// @route   POST /api/clubs
-// @access  Private (Admin/Professor only ideally)
-const createClub = asyncHandler(async (req, res) => {
-  const { name, bio, category, logo_url, banner_url } = req.body;
+    if (!club) {
+      return sendError(res, 404, 'Club not found');
+    }
 
-  const { data: club, error } = await supabase
-    .from('clubs')
-    .insert({
+    return sendSuccess(res, 200, 'Club fetched successfully', club);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.createClub = async (req, res, next) => {
+  try {
+    const { name, bio, category, logo_url, banner_url } = req.body;
+
+    const club = await Club.create({
       name,
-      bio,
+      description: bio,
       category,
-      logo_url,
-      banner_url,
-      creator_id: req.user.id
-    })
-    .select()
-    .single();
+      logoUrl: logo_url,
+      bannerUrl: banner_url,
+      creator: req.user._id,
+      members: [req.user._id],
+    });
 
-  if (error) throw error;
-
-  res.status(201).json({
-    success: true,
-    club
-  });
-});
-
-module.exports = {
-  getClubs,
-  getClub,
-  createClub
+    logger.info('Club created', { clubId: club._id, creator: req.user._id });
+    return sendSuccess(res, 201, 'Club created successfully', club);
+  } catch (err) {
+    next(err);
+  }
 };

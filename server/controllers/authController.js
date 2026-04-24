@@ -4,6 +4,8 @@ const { generateOTP, generateOTPExpiry, isOTPExpired } = require('../utils/otp')
 const { sendOTPEmail, sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/email');
 const logger = require('../config/logger');
 const crypto = require('crypto');
+const { recordFailedAttempt, isAccountLocked, clearLoginAttempts } = require('../utils/loginAttempts');
+const { sendSuccess, sendError } = require('../utils/response');
 
 // POST /api/auth/register
 exports.register = async (req, res, next) => {
@@ -12,12 +14,12 @@ exports.register = async (req, res, next) => {
 
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return res.status(400).json({ success: false, message: 'Email is already registered' });
+      return sendError(res, 400, 'Email is already registered');
     }
 
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
-      return res.status(400).json({ success: false, message: 'Username is already taken' });
+      return sendError(res, 400, 'Username is already taken');
     }
 
     const otp = generateOTP(6);
@@ -42,9 +44,7 @@ exports.register = async (req, res, next) => {
       username: user.username,
     });
 
-    return res.status(201).json({
-      success: true,
-      message: 'Account created. Please check your email for the OTP.',
+    return sendSuccess(res, 201, 'Account created. Please check your email for the OTP.', {
       otpRequired: true,
       email: user.email,
     });
@@ -58,22 +58,35 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.validatedData || req.body;
 
+    // Check if account is locked
+    const locked = await isAccountLocked(email);
+    if (locked) {
+      return sendError(res, 429, 'Account temporarily locked due to too many failed attempts. Try again in 15 minutes.');
+    }
+
     const user = await User.findOne({ email }).select('+password +twoFA');
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      await recordFailedAttempt(email);
+      return sendError(res, 401, 'Invalid email or password');
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      const { locked: nowLocked, remaining } = await recordFailedAttempt(email);
       logger.warn('Failed login attempt', { email, ip: req.ip });
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+
+      if (nowLocked) {
+        return sendError(res, 429, 'Too many failed attempts. Account locked for 15 minutes.');
+      }
+
+      return sendError(res, 401, `Invalid email or password. ${remaining} attempts remaining.`);
     }
 
+    // Clear attempts on successful login
+    await clearLoginAttempts(email);
+
     if (user.isBanned) {
-      return res.status(403).json({
-        success: false,
-        message: `Account banned. Reason: ${user.banReason || 'Policy violation'}`,
-      });
+      return sendError(res, 403, `Account banned. Reason: ${user.banReason || 'Policy violation'}`);
     }
 
     if (!user.isVerified) {
@@ -83,24 +96,16 @@ exports.login = async (req, res, next) => {
       await user.save({ validateBeforeSave: false });
       await sendOTPEmail(email, otp, user.fullName);
 
-      return res.status(200).json({
-        success: false,
-        message: 'Please verify your email. A new OTP has been sent.',
-        otpRequired: true,
-        email: user.email,
-      });
+      return sendError(res, 403, 'Please verify your email. A new OTP has been sent.');
     }
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
-
     setRefreshTokenCookie(res, refreshToken);
 
     logger.info('User logged in', { userId: user._id, email: user.email });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Login successful',
+    return sendSuccess(res, 200, 'Login successful', {
       accessToken,
       user: {
         _id: user._id,
@@ -127,15 +132,15 @@ exports.verifyOTP = async (req, res, next) => {
 
     const user = await User.findOne({ email }).select('+emailOTP +emailOTPExpiry');
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return sendError(res, 404, 'User not found');
     }
 
     if (!user.emailOTP || user.emailOTP !== otp) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+      return sendError(res, 400, 'Invalid OTP');
     }
 
     if (isOTPExpired(user.emailOTPExpiry)) {
-      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+      return sendError(res, 400, 'OTP has expired. Please request a new one.');
     }
 
     user.isVerified = true;
@@ -152,9 +157,7 @@ exports.verifyOTP = async (req, res, next) => {
 
     logger.info('User email verified', { userId: user._id });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Email verified successfully',
+    return sendSuccess(res, 200, 'Email verified successfully', {
       accessToken,
       user: {
         _id: user._id,
@@ -177,7 +180,7 @@ exports.logout = async (req, res, next) => {
   try {
     clearRefreshTokenCookie(res);
     logger.info('User logged out', { userId: req.user?._id });
-    return res.status(200).json({ success: true, message: 'Logged out successfully' });
+    return sendSuccess(res, 200, 'Logged out successfully');
   } catch (err) {
     next(err);
   }
@@ -189,22 +192,22 @@ exports.refreshToken = async (req, res, next) => {
     const token = req.cookies?.refreshToken;
 
     if (!token) {
-      return res.status(401).json({ success: false, message: 'No refresh token provided' });
+      return sendError(res, 401, 'No refresh token provided');
     }
 
     const decoded = verifyRefreshToken(token);
     if (!decoded) {
-      return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+      return sendError(res, 401, 'Invalid or expired refresh token');
     }
 
     const user = await User.findById(decoded.id);
     if (!user || user.isBanned) {
-      return res.status(401).json({ success: false, message: 'User not found or banned' });
+      return sendError(res, 401, 'User not found or banned');
     }
 
     const accessToken = generateAccessToken(user._id);
 
-    return res.status(200).json({ success: true, accessToken });
+    return sendSuccess(res, 200, 'Token refreshed', { accessToken });
   } catch (err) {
     next(err);
   }
@@ -225,10 +228,7 @@ exports.forgotPassword = async (req, res, next) => {
       await sendPasswordResetEmail(email, user.fullName, resetToken);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'If this email exists, a password reset link has been sent.',
-    });
+    return sendSuccess(res, 200, 'If this email exists, a password reset link has been sent.');
   } catch (err) {
     next(err);
   }
@@ -245,7 +245,7 @@ exports.resetPassword = async (req, res, next) => {
     }).select('+emailOTP +emailOTPExpiry');
 
     if (!user) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+      return sendError(res, 400, 'Invalid or expired reset token');
     }
 
     user.password = password;
@@ -255,7 +255,7 @@ exports.resetPassword = async (req, res, next) => {
 
     logger.info('User password reset', { userId: user._id });
 
-    return res.status(200).json({ success: true, message: 'Password reset successful. Please log in.' });
+    return sendSuccess(res, 200, 'Password reset successful. Please log in.');
   } catch (err) {
     next(err);
   }
@@ -268,11 +268,11 @@ exports.resendOTP = async (req, res, next) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return sendError(res, 404, 'User not found');
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ success: false, message: 'Email is already verified' });
+      return sendError(res, 400, 'Email is already verified');
     }
 
     const otp = generateOTP(6);
@@ -282,7 +282,7 @@ exports.resendOTP = async (req, res, next) => {
 
     await sendOTPEmail(email, otp, user.fullName);
 
-    return res.status(200).json({ success: true, message: 'New OTP sent to your email' });
+    return sendSuccess(res, 200, 'New OTP sent to your email');
   } catch (err) {
     next(err);
   }
