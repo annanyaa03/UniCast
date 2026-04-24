@@ -1,4 +1,4 @@
-const supabase = require('../config/supabase');
+
 const asyncHandler = require('../utils/asyncHandler');
 
 // @desc    Get all clubs
