@@ -27,6 +27,14 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Departments = lazy(() => import('./pages/Departments'));
 const Help = lazy(() => import('./pages/Help'));
 
+// Department Detail Pages
+const ComputerDepartment = lazy(() => import('./pages/Departments/ComputerDepartment'));
+const ITDepartment = lazy(() => import('./pages/Departments/ITDepartment'));
+const AIDSDepartment = lazy(() => import('./pages/Departments/AIDSDepartment'));
+const ENTCDepartment = lazy(() => import('./pages/Departments/ENTCDepartment'));
+const ElectricalDepartment = lazy(() => import('./pages/Departments/ElectricalDepartment'));
+const InstrumentationDepartment = lazy(() => import('./pages/Departments/InstrumentationDepartment'));
+
 function App() {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
@@ -69,6 +77,12 @@ function App() {
             <Route path="/shorts" element={<Shorts />} />
             <Route path="/live" element={<Live />} />
             <Route path="/departments" element={<Departments />} />
+            <Route path="/departments/computer" element={<ComputerDepartment />} />
+            <Route path="/departments/it" element={<ITDepartment />} />
+            <Route path="/departments/aids" element={<AIDSDepartment />} />
+            <Route path="/departments/entc" element={<ENTCDepartment />} />
+            <Route path="/departments/electrical" element={<ElectricalDepartment />} />
+            <Route path="/departments/instrumentation" element={<InstrumentationDepartment />} />
             <Route path="/help" element={<Help />} />
             
             {/* Protected Routes */}

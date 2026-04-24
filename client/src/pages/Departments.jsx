@@ -1,51 +1,37 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Building2, ArrowRight, Brain, Cpu, Database, Zap, Settings as SettingsIcon, Radio } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Building2 } from 'lucide-react';
+import { DEPARTMENTS } from '../data/departments';
 
-const DEPARTMENTS = [
-  {
-    name: 'COMPUTER',
-    icon: <Cpu size={24} />,
-    desc: 'Department of Computer Engineering and Information Technology. Focus on software, AI, and systems.',
-    courses: '12 Courses',
-    color: 'var(--blue)'
-  },
-  {
-    name: 'IT',
-    icon: <Database size={24} />,
-    desc: 'Department of Information Technology. Specializing in data management, networking, and security.',
-    courses: '10 Courses',
-    color: 'var(--green)'
-  },
-  {
-    name: 'AIDS',
-    icon: <Brain size={24} />,
-    desc: 'Artificial Intelligence and Data Science. The future of intelligent machines and big data analytics.',
-    courses: '8 Courses',
-    color: 'var(--red)'
-  },
-  {
-    name: 'ENTC',
-    icon: <Radio size={24} />,
-    desc: 'Electronics and Telecommunication. Exploring communication systems, VLSI, and signal processing.',
-    courses: '14 Courses',
-    color: 'var(--yellow)'
-  },
-  {
-    name: 'ELECTRICAL',
-    icon: <Zap size={24} />,
-    desc: 'Electrical Engineering. Power systems, renewable energy, and control mechanisms.',
-    courses: '11 Courses',
-    color: '#ed8936'
-  },
-  {
-    name: 'INSTRUMENTATION',
-    icon: <SettingsIcon size={24} />,
-    desc: 'Instrumentation and Control. Precision measurements and industrial automation logic.',
-    courses: '9 Courses',
-    color: '#805ad5'
-  }
-];
+const DepartmentCard = ({ dept }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div
+      className="dept-card"
+      onClick={() => navigate(`/departments/${dept.slug}`)}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className="dept-card__icon-box">
+        <dept.icon size={28} />
+      </div>
+      <h3 className="dept-card__name">{dept.shortName}</h3>
+      <p className="dept-card__desc">{dept.description}</p>
+      <div className="dept-card__footer">
+        <span className="dept-card__courses">{dept.courses} Courses</span>
+        <span
+          className="dept-card__link"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/departments/${dept.slug}`);
+          }}
+        >
+          View Channel →
+        </span>
+      </div>
+    </div>
+  );
+};
 
 const Departments = () => {
   return (
@@ -63,38 +49,9 @@ const Departments = () => {
         </p>
       </div>
 
-      <div className="video-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '24px' }}>
+      <div className="video-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
         {DEPARTMENTS.map((dept) => (
-          <Link key={dept.name} to={`/departments/${dept.name.toLowerCase()}`} className="club-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '24px', flex: 1 }}>
-              <div 
-                style={{ 
-                  width: '48px', 
-                  height: '48px', 
-                  background: 'var(--gray-100)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  marginBottom: '20px',
-                  color: 'var(--gray-900)'
-                }}
-              >
-                {dept.icon}
-              </div>
-              
-              <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '10px' }}>{dept.name}</h2>
-              <p className="club-card__desc" style={{ fontSize: '14px', lineHeight: 1.6, marginBottom: '20px' }}>
-                {dept.desc}
-              </p>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: 'auto' }}>
-                <span className="badge badge--gray" style={{ borderRadius: '0px' }}>{dept.courses}</span>
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, color: 'var(--gray-900)' }}>
-                  View Channel <ArrowRight size={14} />
-                </div>
-              </div>
-            </div>
-          </Link>
+          <DepartmentCard key={dept.slug} dept={dept} />
         ))}
       </div>
 
