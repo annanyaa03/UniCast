@@ -1,134 +1,181 @@
-const supabase = require('../config/supabase');
-const cloudinary = require('../config/cloudinary');
-const asyncHandler = require('../utils/asyncHandler');
-const fs = require('fs');
+const Video = require('../models/Video');
 
-// @desc    Get all videos
-// @route   GET /api/videos
-// @access  Public
-const getVideos = asyncHandler(async (req, res) => {
-  const { category, q, creatorId, page = 1, limit = 10 } = req.query;
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from('videos')
-    .select('*, profiles(full_name, username, avatar_url)')
-    .eq('visibility', 'public')
-    .order('created_at', { ascending: false });
-
-  if (category) query = query.eq('category', category.toLowerCase());
-  if (creatorId) query = query.eq('creator_id', creatorId);
-  if (q) query = query.ilike('title', `%${q}%`);
-
-  const { data, error, count } = await query.range(from, to);
-
-  if (error) throw error;
-
-  res.status(200).json({
-    success: true,
-    videos: data,
-    page: parseInt(page),
-    hasMore: count > (from + limit)
-  });
-});
-
-// @desc    Get single video
-// @route   GET /api/videos/:id
-// @access  Public
-const getVideo = asyncHandler(async (req, res) => {
-  const { data: video, error } = await supabase
-    .from('videos')
-    .select('*, profiles(full_name, username, avatar_url)')
-    .eq('id', req.params.id)
-    .single();
-
-  if (error || !video) {
-    res.status(404);
-    throw new Error('Video not found');
-  }
-
-  // Increment views (naive)
-  await supabase
-    .from('videos')
-    .update({ views_count: video.views_count + 1 })
-    .eq('id', req.params.id);
-
-  res.status(200).json({
-    success: true,
-    video
-  });
-});
-
-// @desc    Upload video
-// @route   POST /api/videos/upload
-// @access  Private
-const uploadVideo = asyncHandler(async (req, res) => {
-  const { title, description, category, visibility, tags } = req.body;
-  
-  if (!req.files || !req.files.video) {
-    res.status(400);
-    throw new Error('Please upload a video');
-  }
-
-  const videoFile = req.files.video[0];
-  const thumbFile = req.files.thumbnail ? req.files.thumbnail[0] : null;
-
+// GET /api/videos
+exports.getVideos = async (req, res) => {
   try {
-    // Upload to Cloudinary
-    const videoUpload = await cloudinary.uploader.upload(videoFile.path, {
-      resource_type: 'video',
-      folder: 'unicast/videos'
-    });
+    const {
+      category,
+      page = 1,
+      limit = 12,
+      sort = 'createdAt'
+    } = req.query;
 
-    let thumbUrl = '';
-    if (thumbFile) {
-      const thumbUpload = await cloudinary.uploader.upload(thumbFile.path, {
-        folder: 'unicast/thumbnails'
-      });
-      thumbUrl = thumbUpload.secure_url;
-    } else {
-      // Auto-generate thumbnail from video
-      thumbUrl = videoUpload.secure_url.replace(/\.[^/.]+$/, ".jpg");
+    const filter = { visibility: 'public' };
+
+    if (category && category.trim() !== '') {
+      filter.category = category;
     }
 
-    // Save to Supabase
-    const { data: video, error } = await supabase
-      .from('videos')
-      .insert({
-        creator_id: req.user.id,
-        title,
-        description,
-        url: videoUpload.secure_url,
-        thumbnail_url: thumbUrl,
-        duration: Math.floor(videoUpload.duration),
-        category: category.toLowerCase(),
-        visibility,
-        tags: tags ? tags.split(',').map(t => t.trim()) : []
-      })
-      .select()
-      .single();
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    if (error) throw error;
+    const sortOption = {};
+    if (sort === 'views') sortOption.views = -1;
+    else if (sort === 'oldest') sortOption.createdAt = 1;
+    else sortOption.createdAt = -1;
 
-    // Clean up local files
-    fs.unlinkSync(videoFile.path);
-    if (thumbFile) fs.unlinkSync(thumbFile.path);
+    const videos = await Video.find(filter)
+      .populate('uploader', 'fullName avatar username _id')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
 
-    res.status(201).json({
-      success: true,
-      video
+    const total = await Video.countDocuments(filter);
+
+    return res.status(200).json({
+      videos,
+      hasMore: skip + videos.length < total,
+      total,
+      page: parseInt(page),
     });
-  } catch (error) {
-    // Clean up local files on error
-    if (fs.existsSync(videoFile.path)) fs.unlinkSync(videoFile.path);
-    if (thumbFile && fs.existsSync(thumbFile.path)) fs.unlinkSync(thumbFile.path);
-    throw error;
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
-});
+};
 
-module.exports = {
-  getVideos,
-  getVideo,
-  uploadVideo
+// GET /api/videos/trending
+exports.getTrending = async (req, res) => {
+  try {
+    const videos = await Video.find({ visibility: 'public' })
+      .populate('uploader', 'fullName avatar username _id')
+      .sort({ views: -1, createdAt: -1 })
+      .limit(12)
+      .lean();
+
+    return res.status(200).json({ videos });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/videos/search
+exports.searchVideos = async (req, res) => {
+  try {
+    const { q = '', page = 1, limit = 12 } = req.query;
+    const filter = { visibility: 'public', title: { $regex: q, $options: 'i' } };
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const videos = await Video.find(filter)
+      .populate('uploader', 'fullName avatar username _id')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Video.countDocuments(filter);
+
+    return res.status(200).json({
+      videos,
+      hasMore: skip + videos.length < total,
+      total,
+      page: parseInt(page),
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/videos/:id
+exports.getVideoById = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id)
+      .populate('uploader', 'fullName avatar username subscribers _id')
+      .lean();
+
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    return res.status(200).json(video);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/videos/:id/view
+exports.incrementView = async (req, res) => {
+  try {
+    await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+    return res.status(200).json({ message: 'View counted' });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/videos/:id/like
+exports.likeVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) return res.status(404).json({ message: 'Video not found' });
+
+    const userId = req.user._id;
+    const alreadyLiked = video.likes.includes(userId);
+
+    if (alreadyLiked) {
+      video.likes.pull(userId);
+    } else {
+      video.likes.push(userId);
+      video.dislikes.pull(userId);
+    }
+
+    await video.save();
+    return res.status(200).json(video);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/videos/:id/dislike
+exports.dislikeVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) return res.status(404).json({ message: 'Video not found' });
+
+    const userId = req.user._id;
+    const alreadyDisliked = video.dislikes.includes(userId);
+
+    if (alreadyDisliked) {
+      video.dislikes.pull(userId);
+    } else {
+      video.dislikes.push(userId);
+      video.likes.pull(userId);
+    }
+
+    await video.save();
+    return res.status(200).json(video);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// DELETE /api/videos/:id
+exports.deleteVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) return res.status(404).json({ message: 'Video not found' });
+
+    if (video.uploader.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    await Video.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ message: 'Video deleted' });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/videos/upload (stubbed to prevent crash since it's referenced in routes)
+exports.uploadVideo = async (req, res) => {
+  res.status(501).json({ message: 'Not implemented yet' });
 };

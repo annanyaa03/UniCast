@@ -1,14 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { getVideos, getVideo, uploadVideo } = require('../controllers/videoController');
-const { protect } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const videoController = require('../controllers/videoController');
+const { protect, optionalAuth } = require('../middleware/auth');
 
-router.get('/', getVideos);
-router.get('/:id', getVideo);
-router.post('/upload', protect, upload.fields([
-  { name: 'video', maxCount: 1 },
-  { name: 'thumbnail', maxCount: 1 }
-]), uploadVideo);
+// CORRECT ORDER - specific routes first, param routes last
+router.get('/trending', videoController.getTrending);          // FIRST
+router.get('/search', videoController.searchVideos);           // SECOND
+router.get('/', optionalAuth, videoController.getVideos);      // THIRD
+router.get('/:id', optionalAuth, videoController.getVideoById); // LAST
+
+router.post('/upload', protect, videoController.uploadVideo);
+router.post('/:id/like', protect, videoController.likeVideo);
+router.post('/:id/dislike', protect, videoController.dislikeVideo);
+router.post('/:id/view', videoController.incrementView);
+router.delete('/:id', protect, videoController.deleteVideo);
 
 module.exports = router;
