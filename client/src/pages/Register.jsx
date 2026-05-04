@@ -70,10 +70,10 @@ const Register = () => {
     <div className="auth-page">
       <div className="auth-page__left">
         <div>
-          <div className="navbar__logo" style={{ color: '#fff', marginBottom: 40 }}>
+          <Link to="/" className="navbar__logo" style={{ color: '#fff', marginBottom: 40, display: 'inline-flex' }}>
             <div className="navbar__logo-mark"><span>UC</span></div>
             UniCast
-          </div>
+          </Link>
           <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.35, marginBottom: 14 }}>
             Join your college community.
           </h2>
@@ -90,10 +90,14 @@ const Register = () => {
 
       <div className="auth-page__right" style={{ alignItems: 'flex-start', paddingTop: 40 }}>
         <div className="auth-box" style={{ maxWidth: 460 }}>
-          <div className="auth-logo">
+          <Link to="/" className="auth-logo">
             <div className="auth-logo-mark"><span>UC</span></div>
             <span className="auth-logo-text">UniCast</span>
-          </div>
+          </Link>
+
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--gray-500)', marginBottom: 20, transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--gray-900)'} onMouseLeave={(e) => e.target.style.color = 'var(--gray-500)'}>
+            <span style={{ fontSize: 18, lineHeight: 0 }}>←</span> Back to Home
+          </Link>
 
           <h1 className="auth-title">Create account</h1>
           <p className="auth-subtitle">Register with your official college email address.</p>

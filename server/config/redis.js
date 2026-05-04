@@ -7,6 +7,7 @@ const connectRedis = async () => {
   try {
     redisClient = createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
+      disableOfflineQueue: true, // Don't queue commands if offline
     });
 
     redisClient.on('error', (err) => {
@@ -22,7 +23,6 @@ const connectRedis = async () => {
     logger.info('Redis Connected', { url: process.env.REDIS_URL || 'redis://localhost:6379' });
   } catch (err) {
     logger.error('Redis connection failed', { error: err.message });
-    // Redis is optional — app continues without caching
     redisClient = null;
   }
 };

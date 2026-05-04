@@ -26,7 +26,7 @@ const connectDB = async () => {
     });
   } catch (err) {
     logger.error('MongoDB connection failed', { error: err.message });
-    process.exit(1);
+    // Don't exit process, allow server to start in degraded mode for debugging
   }
 };
 

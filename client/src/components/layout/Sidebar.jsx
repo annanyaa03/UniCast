@@ -29,7 +29,7 @@ const Sidebar = () => {
   ];
 
   const explore = [
-    { to: '/search?filter=trending', icon: <Flame size={17} />, label: 'Trending' },
+    { to: '/trending', icon: <Flame size={17} />, label: 'Trending' },
     { to: '/departments', icon: <GraduationCap size={17} />, label: 'Departments' },
     { to: '/clubs', icon: <Users size={17} />, label: 'Clubs' },
     { to: '/events', icon: <Ticket size={17} />, label: 'Events' },

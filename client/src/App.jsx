@@ -26,6 +26,10 @@ const Settings = lazy(() => import('./pages/Settings'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Departments = lazy(() => import('./pages/Departments'));
 const Help = lazy(() => import('./pages/Help'));
+const Trending = lazy(() => import('./pages/Trending'));
+const Subscriptions = lazy(() => import('./pages/Subscriptions'));
+const LikedVideos = lazy(() => import('./pages/LikedVideos'));
+const WatchLater = lazy(() => import('./pages/WatchLater'));
 
 // Department Detail Pages
 const ComputerDepartment = lazy(() => import('./pages/Departments/ComputerDepartment'));
@@ -89,7 +93,10 @@ function App() {
             <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
             <Route path="/playlists" element={<ProtectedRoute><Playlists /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-            <Route path="/subscriptions" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
+            <Route path="/trending" element={<Trending />} />
+            <Route path="/liked" element={<ProtectedRoute><LikedVideos /></ProtectedRoute>} />
+            <Route path="/saved" element={<ProtectedRoute><WatchLater /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             
             {/* Admin Routes */}
